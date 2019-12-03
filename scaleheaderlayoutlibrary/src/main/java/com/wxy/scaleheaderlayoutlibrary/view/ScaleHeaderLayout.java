@@ -37,7 +37,7 @@ public class ScaleHeaderLayout extends LinearLayout {
     private float ratio; //阻尼系数
     private ValueAnimator anim;//回弹动画
     private int recoverTime=200;
-
+    private boolean isFirstInitAnim;
     public void setRecoverTime(int recoverTime) {
         this.recoverTime = recoverTime<200?200:recoverTime;
     }
@@ -57,8 +57,10 @@ public class ScaleHeaderLayout extends LinearLayout {
         headView.post(new Runnable() {
             @Override
             public void run() {
+                if (headHeight==0){
                 headHeight=headView.getHeight();
                 headWidth=headView.getWidth();
+                }
             }
         });
     }
@@ -77,51 +79,41 @@ public class ScaleHeaderLayout extends LinearLayout {
     public ScaleHeaderLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initAnim();
-        scroller=new Scroller(context);
         ViewConfiguration vc = ViewConfiguration.get(context);
         mMaxFlingVelocity = vc.getMaximumFlingVelocity();
     }
     private void initAnim() {
+        isFirstInitAnim=true;
         anim = new ValueAnimator();
         anim.setInterpolator(new DecelerateInterpolator());
         anim.setDuration(recoverTime);
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                float currentValue = (float) animation.getAnimatedValue();
-                headView.setScaleX(currentValue);
-                headView.setScaleY(currentValue);
+                if (!isFirstInitAnim){
+                    float currentValue = (float) animation.getAnimatedValue();
+                    Log.v("heihei=",currentValue+"");
+                    setHeadViewPosition(currentValue);
+            }
             }
         });
-        anim.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-            }
 
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mTotalDy=0;
-//                headView.setScaleX(1);
-//                headView.setScaleY(1);
-                ViewGroup.LayoutParams layoutParams=headView.getLayoutParams();
-                layoutParams.height= (int) (headHeight+headHeight*mLastScale/2);
-                Log.v("heihei=",headHeight+"");
-                headView.setLayoutParams(layoutParams);
+    }
+    private void setHeadViewPosition(float scale){
+        ViewGroup.LayoutParams layoutParams=headView.getLayoutParams();
+        layoutParams.height= (int) (headHeight+headHeight*(scale-1)/2);
+        headView.setLayoutParams(layoutParams);
+//        headView.requestLayout();
+//        Log.v("heihei=",headHeight+"");
 
-            }
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
-        });
+//        headView.setScaleX(scale);
+//        headView.setScaleY(scale);
     }
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (scroller==null){
+            scroller=new Scroller(getContext());
+        }
         if (isHasHeadView()&&isReadyScale()&&scroller.isFinished()){
             //添加速度检测器，用于处理fling效果
 
@@ -150,6 +142,8 @@ public class ScaleHeaderLayout extends LinearLayout {
         }
         return super.onInterceptTouchEvent(ev);
     }
+
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (isHasHeadView()&&isReadyScale()&&scroller.isFinished()){
@@ -171,6 +165,7 @@ public class ScaleHeaderLayout extends LinearLayout {
                         mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
                         int yvel = (int) mVelocityTracker.getYVelocity();
                         mLastFlingY=(int) mTotalDy;
+
                         scroller.fling( 0, (int) mTotalDy,0,-yvel,-headWidth*20,headWidth*20,-headHeight*10,headHeight*10);
                         invalidate();
                         if (mVelocityTracker != null) {
@@ -188,6 +183,7 @@ public class ScaleHeaderLayout extends LinearLayout {
     @Override
     public void computeScroll() {
         super.computeScroll();
+        if (scroller==null)return;
         if (scroller.computeScrollOffset()){
             int y = scroller.getCurrY();
                 int dy= mLastFlingY-y;
@@ -199,6 +195,7 @@ public class ScaleHeaderLayout extends LinearLayout {
         }
     }
     private void recoverScale() {
+        isFirstInitAnim=false;
         anim.setFloatValues(headView.getScaleX(),1f);
         anim.setDuration(recoverTime);
         anim.start();
@@ -212,12 +209,9 @@ public class ScaleHeaderLayout extends LinearLayout {
                 scroller.abortAnimation();
             }
         }
-//        ViewCompat.setScaleX(headView, mLastScale);
-//        ViewCompat.setScaleY(headView, mLastScale);
-        ViewGroup.LayoutParams layoutParams=headView.getLayoutParams();
-        layoutParams.height= (int) (headHeight+headHeight*mLastScale/2);
-        Log.v("heihei=",headHeight+"");
-        headView.setLayoutParams(layoutParams);
+        setHeadViewPosition(mLastScale);
+
+
     }
 
     //有headView
