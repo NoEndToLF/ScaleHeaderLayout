@@ -11,16 +11,19 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Scroller;
 
 import com.wxy.scaleheaderlayoutlibrary.callback.OnReadyScaleListener;
 
+import java.util.concurrent.CountDownLatch;
+
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
-public class ScaleHeaderLayout extends LinearLayout {
+public class ScaleHeaderLayout extends FrameLayout {
     private boolean isEnable = true;//是否允许下拉放大
     private boolean isRefreshable = false;//是否允许下拉刷新
     private int headHeight,headWidth;//头部的高度和宽度
@@ -33,11 +36,11 @@ public class ScaleHeaderLayout extends LinearLayout {
     private float mLastY ;
     private float mTotalDy;//滑动的距离
     private float mLastScale;//缩放比例
-    private int mLastFlingY;
+    private float mLastFlingY;
     private float ratio; //阻尼系数
     private ValueAnimator anim;//回弹动画
     private int recoverTime=200;
-    private boolean isFirstInitAnim;
+    private boolean isFling;
     public void setRecoverTime(int recoverTime) {
         this.recoverTime = recoverTime<200?200:recoverTime;
     }
@@ -76,47 +79,27 @@ public class ScaleHeaderLayout extends LinearLayout {
         this(context, attrs,0);
     }
 
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+    }
+
     public ScaleHeaderLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initAnim();
         ViewConfiguration vc = ViewConfiguration.get(context);
         mMaxFlingVelocity = vc.getMaximumFlingVelocity();
-    }
-    private void initAnim() {
-        isFirstInitAnim=true;
-        anim = new ValueAnimator();
-        anim.setInterpolator(new DecelerateInterpolator());
-        anim.setDuration(recoverTime);
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                if (!isFirstInitAnim){
-                    float currentValue = (float) animation.getAnimatedValue();
-                    Log.v("heihei=",currentValue+"");
-                    setHeadViewPosition(currentValue);
-            }
-            }
-        });
-
+            scroller=new Scroller(getContext());
     }
     private void setHeadViewPosition(float scale){
         ViewGroup.LayoutParams layoutParams=headView.getLayoutParams();
-        layoutParams.height= (int) (headHeight+headHeight*(scale-1)/2);
-        headView.setLayoutParams(layoutParams);
-//        headView.requestLayout();
-//        Log.v("heihei=",headHeight+"");
-
-//        headView.setScaleX(scale);
-//        headView.setScaleY(scale);
+        layoutParams.height= (int) ((float)headHeight+(float)headHeight*(scale-1)/2);
+        layoutParams.width= (int) ((float)headWidth+(float)headWidth*(scale-1)/2);
+        headView.setPadding(0,0, (int) ((float)layoutParams.width-(float)headWidth),0);
+        headView.requestLayout();
     }
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (scroller==null){
-            scroller=new Scroller(getContext());
-        }
         if (isHasHeadView()&&isReadyScale()&&scroller.isFinished()){
-            //添加速度检测器，用于处理fling效果
-
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 downX = ev.getX();
@@ -130,9 +113,11 @@ public class ScaleHeaderLayout extends LinearLayout {
                 float moveX = ev.getX() - downX;
                 float moveY = ev.getY() -downY ;
                 //向下滑动
-                if (moveY > 0 && moveY / Math.abs(moveX) > 2) {
-                    isBeginScale = true;
-                    return true;
+                if (isReadyScale()){
+                    if (moveY > 0 && moveY / Math.abs(moveX) > 2) {
+                        isBeginScale = true;
+                        return true;
+                    }
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -164,12 +149,17 @@ public class ScaleHeaderLayout extends LinearLayout {
                     if (isBeginScale){
                         mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
                         int yvel = (int) mVelocityTracker.getYVelocity();
-                        mLastFlingY=(int) mTotalDy;
-
+                        if (yvel>1000){
+                        mLastFlingY= mTotalDy;
+                        isFling=true;
                         scroller.fling( 0, (int) mTotalDy,0,-yvel,-headWidth*20,headWidth*20,-headHeight*10,headHeight*10);
                         invalidate();
                         if (mVelocityTracker != null) {
                             mVelocityTracker.clear();
+                        }
+                        }else {
+                            scroller.abortAnimation();
+                            recoverScale();
                         }
                         return true;
                     }
@@ -179,14 +169,13 @@ public class ScaleHeaderLayout extends LinearLayout {
         }
         return super.onTouchEvent(ev);
     }
-
     @Override
     public void computeScroll() {
         super.computeScroll();
-        if (scroller==null)return;
+        if (!isFling)return;
         if (scroller.computeScrollOffset()){
             int y = scroller.getCurrY();
-                int dy= mLastFlingY-y;
+                int dy=(int) mLastFlingY-y;
                 mLastFlingY=y;
                 scale(dy);
             invalidate();
@@ -195,10 +184,48 @@ public class ScaleHeaderLayout extends LinearLayout {
         }
     }
     private void recoverScale() {
-        isFirstInitAnim=false;
-        anim.setFloatValues(headView.getScaleX(),1f);
-        anim.setDuration(recoverTime);
-        anim.start();
+        if (anim==null) {
+            anim = new ValueAnimator();
+            anim.setInterpolator(new DecelerateInterpolator());
+            anim.setDuration(recoverTime);
+            anim.setFloatValues(mLastScale, 1f);
+            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float currentValue = (float) animation.getAnimatedValue();
+                    setHeadViewPosition(currentValue);
+                }
+            });
+            anim.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    isFling = false;
+
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+            anim.start();
+        }else {
+            if (!anim.isRunning()){
+                anim.setDuration(recoverTime);
+                anim.setFloatValues(mLastScale, 1f);
+                anim.start();
+            }
+        }
     }
     private void scale(  int dy) {
         mTotalDy += dy;
@@ -210,8 +237,6 @@ public class ScaleHeaderLayout extends LinearLayout {
             }
         }
         setHeadViewPosition(mLastScale);
-
-
     }
 
     //有headView
