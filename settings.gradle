@@ -1,0 +1,2 @@
+include ':app', ':scaleheaderlayoutlibrary'
+rootProject.name='ScaleHeaderLayout'
