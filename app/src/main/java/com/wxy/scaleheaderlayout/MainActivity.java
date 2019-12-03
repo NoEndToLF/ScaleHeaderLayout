@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
     }
     @OnClick({R.id.btn_normal, R.id.btn_beautiful})
     public void onViewClicked(View view) {

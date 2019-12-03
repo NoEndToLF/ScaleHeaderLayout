@@ -1,16 +1,13 @@
 package com.wxy.scaleheaderlayout;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.google.android.material.appbar.AppBarLayout;
 import com.wxy.scaleheaderlayout.adapter.MainPagerAdapter;
 import com.wxy.scaleheaderlayout.fragment.FragmentOne;
 import com.wxy.scaleheaderlayout.listener.AppBarLayoutStateChangeListener;
-import com.wxy.scaleheaderlayout.view.NoScrollViewPager;
 import com.wxy.scaleheaderlayoutlibrary.callback.OnReadyScaleListener;
 import com.wxy.scaleheaderlayoutlibrary.view.ScaleHeaderLayout;
 
@@ -40,10 +37,10 @@ public class BeautifulActivity extends AppCompatActivity {
     @BindView(R.id.appbar_layout)
     AppBarLayout appbarLayout;
     @BindView(R.id.viewpager)
-    NoScrollViewPager viewpager;
+    ViewPager viewpager;
     @BindView(R.id.scale_layout)
     ScaleHeaderLayout scaleLayout;
-    private volatile boolean isScale;
+    private  boolean isScale;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,13 +48,12 @@ public class BeautifulActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         initViewPager();
         scaleLayout.setHeadView(ivHead);
-        scaleLayout.setRatio(0.5f);
+        scaleLayout.setRatio(0.2f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);
         scaleLayout.setOnReadyScaleListener(new OnReadyScaleListener() {
             @Override
             public boolean isReadyScale() {
-//                Log.v("heihei=",""+isScale);
                 return isScale;
             }
         });
@@ -67,15 +63,12 @@ public class BeautifulActivity extends AppCompatActivity {
                 switch (state){
                     case EXPANDED:
                         isScale=true;
-                        viewpager.setNoScroll(false);
                         break;
                     case COLLAPSED:
                         isScale=false;
-                        viewpager.setNoScroll(false);
                         break;
                     case INTERMEDIATE:
                         isScale=false;
-                        viewpager.setNoScroll(true);
                         break;
                 }
             }

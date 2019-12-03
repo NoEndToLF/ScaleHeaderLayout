@@ -99,9 +99,10 @@ public class ScaleHeaderLayout extends FrameLayout {
     }
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (isHasHeadView()&&isReadyScale()&&scroller.isFinished()){
+        if (isHasHeadView()&&isReadyScale()&&!isFling){
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                Log.v("xixi=","ACTION_DOWN");
                 downX = ev.getX();
                 downY = ev.getY();
                 isBeginScale = false;
@@ -131,14 +132,14 @@ public class ScaleHeaderLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (isHasHeadView()&&isReadyScale()&&scroller.isFinished()){
+        if (isHasHeadView()&&isReadyScale()&&!isFling){
             if (mVelocityTracker == null) {
                 mVelocityTracker = VelocityTracker.obtain();
             }
             mVelocityTracker.addMovement(ev);
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_MOVE:
-                    if (isBeginScale) {
+                    if (isBeginScale&&mLastY!=-1) {
                         float moveY = ev.getY() - mLastY;
                         //向下滑动
                         scale((int) moveY);
@@ -146,9 +147,11 @@ public class ScaleHeaderLayout extends FrameLayout {
                     break;
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
-                    if (isBeginScale){
+                    if (isBeginScale&&mLastY!=-1){
                         mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
                         int yvel = (int) mVelocityTracker.getYVelocity();
+                        //因为速度过大的话，        headView.requestLayout();会有轻微的卡顿，所以限制了最大速度
+                        yvel= Math.min(yvel,4000);
                         if (yvel>1000){
                         mLastFlingY= mTotalDy;
                         isFling=true;
@@ -165,7 +168,9 @@ public class ScaleHeaderLayout extends FrameLayout {
                     }
                     break;
             }
+            if (mLastY!=-1){
             mLastY= ev.getY();
+            }
         }
         return super.onTouchEvent(ev);
     }
@@ -177,7 +182,8 @@ public class ScaleHeaderLayout extends FrameLayout {
             int y = scroller.getCurrY();
                 int dy=(int) mLastFlingY-y;
                 mLastFlingY=y;
-                scale(dy);
+                mLastY=-1;
+            scale(dy);
             invalidate();
         }else {
             recoverScale();
@@ -205,7 +211,7 @@ public class ScaleHeaderLayout extends FrameLayout {
                 @Override
                 public void onAnimationEnd(Animator animation) {
                     isFling = false;
-
+                    mLastY=-1;
                 }
 
                 @Override

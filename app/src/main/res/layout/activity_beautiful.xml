@@ -18,8 +18,6 @@
             <com.google.android.material.appbar.CollapsingToolbarLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipChildren="false"
-                android:clipToPadding="false"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
                 <RelativeLayout
                     android:layout_width="match_parent"
@@ -41,17 +39,17 @@
                         ></ImageView>
 </LinearLayout>
                     <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                         android:layout_below="@+id/linear_head"
-                        android:text="客心愁日暮，徙倚空望归。
+                    android:text="客心愁日暮，徙倚空望归。
 山烟涵树色，江水映霞晖。
 独鹤凌空逝，双凫出浪飞。
 故乡千余里，兹夕寒无衣。"
-                        android:background="@color/colorPrimary"
-                        android:padding="20dp"
-                        android:textColor="#ffffff"
-                        android:id="@+id/tv_content"></TextView>
+                    android:background="@color/colorPrimary"
+                    android:padding="20dp"
+                    android:textColor="@color/white"
+                    android:id="@+id/tv_content"></TextView>
 
                     <ImageView
                         android:layout_width="60dp"
@@ -89,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 app:layout_collapseMode="pin"
-                android:background="#ffffff"
+                android:background="@color/white"
                 >
                 <TextView
                     android:layout_width="0dp"
@@ -106,7 +104,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:text="第二个"
-                    android:textColor="#000000"
+                    android:textColor="@color/black"
                     android:padding="20dp"
                     android:layout_height="wrap_content"
                     android:id="@+id/tv_fragment_two"
@@ -115,14 +113,14 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="#f1f1f1" />
+                android:background="@color/divider_line" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <com.wxy.scaleheaderlayout.view.NoScrollViewPager
+        <androidx.viewpager.widget.ViewPager
             android:id="@+id/viewpager"
             android:layout_width="match_parent"
-            android:background="#ffffff"
+            android:background="@color/white"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             android:layout_height="match_parent"
             />
