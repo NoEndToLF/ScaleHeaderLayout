@@ -26,6 +26,7 @@ public class NormalActivity extends AppCompatActivity {
         scaleLayout.setRatio(0.5f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);
+        scaleLayout.setEnableFlingScale(true);
         scaleLayout.setOnReadyScaleListener(new OnReadyScaleListener() {
             @Override
             public boolean isReadyScale() {

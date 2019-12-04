@@ -1,14 +1,24 @@
 package com.wxy.scaleheaderlayout;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.android.material.appbar.AppBarLayout;
 import com.wxy.scaleheaderlayout.adapter.MainPagerAdapter;
 import com.wxy.scaleheaderlayout.fragment.FragmentOne;
 import com.wxy.scaleheaderlayout.listener.AppBarLayoutStateChangeListener;
 import com.wxy.scaleheaderlayoutlibrary.callback.OnReadyScaleListener;
+import com.wxy.scaleheaderlayoutlibrary.callback.OnRefreshListener;
 import com.wxy.scaleheaderlayoutlibrary.view.ScaleHeaderLayout;
 
 import java.util.ArrayList;
@@ -40,7 +50,11 @@ public class BeautifulActivity extends AppCompatActivity {
     ViewPager viewpager;
     @BindView(R.id.scale_layout)
     ScaleHeaderLayout scaleLayout;
-    private  boolean isScale;
+    @BindView(R.id.iv_refresh)
+    ImageView ivRefresh;
+    private boolean isScale;
+    private float maxRefreshHeight;
+    private boolean isFreshing;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,29 +65,105 @@ public class BeautifulActivity extends AppCompatActivity {
         scaleLayout.setRatio(0.2f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);
+        scaleLayout.setEnableFlingScale(true);
         scaleLayout.setOnReadyScaleListener(new OnReadyScaleListener() {
             @Override
             public boolean isReadyScale() {
                 return isScale;
             }
         });
+        scaleLayout.setOnRefreshListener(new OnRefreshListener() {
+            @Override
+            public void onRefreshPrepare() {
+                if (isFreshing)return;
+                //先让ivRefresh隐藏掉
+                ivRefresh.setTranslationY(-ivRefresh.getHeight());
+            }
+            @Override
+            public void onRefreshPulldown(float dy, float headViewHeight) {
+                if (isFreshing)return;
+                //自定义下拉的最大位置
+                 maxRefreshHeight=headViewHeight/3;
+                //随着下拉距离变换
+                ivRefresh.setTranslationY(Math.min(dy-ivRefresh.getHeight(),maxRefreshHeight));
+                Log.v("xixi", dy-ivRefresh.getHeight()/maxRefreshHeight*360f+"");
+                ivRefresh.setRotation(dy-ivRefresh.getHeight()/maxRefreshHeight*360);
+            }
+            @Override
+            public void onRefreshReady() {
+                if (ivRefresh.getTranslationY()<maxRefreshHeight){
+                    //达不到最大下拉位置，则认为不加载，直接recover
+                    recover(null);
+                }else {
+                    //达到最大下拉位置，则认为加载,执行加载动画
+                    isFreshing=true;
+                    Toast.makeText(BeautifulActivity.this, "开始加载", Toast.LENGTH_SHORT).show();
+                float rotation = ivRefresh.getRotation();
+                ValueAnimator valueAnimator= ObjectAnimator.ofFloat(ivRefresh, "rotation", rotation, rotation + 360);
+                valueAnimator.setInterpolator(new LinearInterpolator());
+                valueAnimator.setDuration(1000);
+                valueAnimator.setRepeatMode(ValueAnimator.RESTART);
+                valueAnimator.setRepeatCount(-1);
+                valueAnimator.start();
+                //模拟耗时操作
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(BeautifulActivity.this, "加载成功", Toast.LENGTH_SHORT).show();
+                        recover(valueAnimator);
+                    }
+                },2000);
+            }
+            }
+        });
         appbarLayout.addOnOffsetChangedListener(new AppBarLayoutStateChangeListener() {
             @Override
-            public void onStateChanged(AppBarLayout appBarLayout, AppBarLayoutStateChangeListener.State state) {
-                switch (state){
+            public void onStateChanged(AppBarLayout appBarLayout, State state) {
+                switch (state) {
                     case EXPANDED:
-                        isScale=true;
+                        isScale = true;
                         break;
                     case COLLAPSED:
-                        isScale=false;
+                        isScale = false;
                         break;
                     case INTERMEDIATE:
-                        isScale=false;
+                        isScale = false;
                         break;
                 }
             }
         });
     }
+
+    private void recover(ValueAnimator refreshAnimator) {
+        ValueAnimator recoverAnimator= ObjectAnimator.ofFloat(ivRefresh, "translationY", ivRefresh.getTranslationY(), -ivRefresh.getHeight());
+        recoverAnimator.setInterpolator(new AccelerateInterpolator());
+        recoverAnimator.setDuration(300);
+        recoverAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+            }
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                isFreshing=false;
+                if (refreshAnimator!=null){
+                    refreshAnimator.cancel();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+        recoverAnimator.start();
+
+    }
+
     private void initViewPager() {
         List<Fragment> list = new ArrayList<>();
         list.add(new FragmentOne());

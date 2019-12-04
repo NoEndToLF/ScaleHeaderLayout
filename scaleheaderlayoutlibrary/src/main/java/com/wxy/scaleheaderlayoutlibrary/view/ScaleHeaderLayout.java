@@ -17,6 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.Scroller;
 
 import com.wxy.scaleheaderlayoutlibrary.callback.OnReadyScaleListener;
+import com.wxy.scaleheaderlayoutlibrary.callback.OnRefreshListener;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -24,11 +25,10 @@ import androidx.annotation.Nullable;
 import androidx.core.view.ViewCompat;
 
 public class ScaleHeaderLayout extends FrameLayout {
-    private boolean isEnable = true;//是否允许下拉放大
-    private boolean isRefreshable = false;//是否允许下拉刷新
+    private boolean isEnableScale = true;//是否允许下拉放大
     private int headHeight,headWidth;//头部的高度和宽度
     private OnReadyScaleListener onReadyScaleListener;//是否可以滑动放大
-    private boolean isFlingScale;//是否可以惯性放大
+    private boolean isEnableFlingScale;//是否可以惯性放大
     private View headView;//可放大的View
     private boolean isBeginScale;//开始缩放
     private float downX,downY;
@@ -41,10 +41,15 @@ public class ScaleHeaderLayout extends FrameLayout {
     private ValueAnimator anim;//回弹动画
     private int recoverTime=200;
     private boolean isFling;
+    public void setEnableScale(boolean enableScale) {
+        isEnableScale = enableScale;
+    }
     public void setRecoverTime(int recoverTime) {
         this.recoverTime = recoverTime<200?200:recoverTime;
     }
-
+    public void setEnableFlingScale(boolean enableFlingScale) {
+        isEnableFlingScale = enableFlingScale;
+    }
     protected VelocityTracker mVelocityTracker;
     private int mMaxFlingVelocity;//最大速度
     protected Scroller scroller;
@@ -54,15 +59,28 @@ public class ScaleHeaderLayout extends FrameLayout {
     public void setRatio(float ratio) {
         this.ratio = ratio<0?0:ratio;
     }
+    private OnRefreshListener onRefreshListener;
+    public void setOnRefreshListener(OnRefreshListener onRefreshListener) {
+        this.onRefreshListener = onRefreshListener;
+
+    }
 
     public void setHeadView(final View headView) {
         this.headView = headView;
+        if (headView!=null){
+            if (!(headView.getParent()  instanceof LinearLayout)){
+                throw new RuntimeException("headView必须至于LinearLayout中");
+            }
+        }
         headView.post(new Runnable() {
             @Override
             public void run() {
                 if (headHeight==0){
                 headHeight=headView.getHeight();
                 headWidth=headView.getWidth();
+                    if (onRefreshListener!=null){
+                        onRefreshListener.onRefreshPrepare();
+                    }
                 }
             }
         });
@@ -78,12 +96,6 @@ public class ScaleHeaderLayout extends FrameLayout {
     public ScaleHeaderLayout(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs,0);
     }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
-    }
-
     public ScaleHeaderLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         ViewConfiguration vc = ViewConfiguration.get(context);
@@ -95,14 +107,12 @@ public class ScaleHeaderLayout extends FrameLayout {
         layoutParams.height= (int) ((float)headHeight+(float)headHeight*(scale-1)/2);
         layoutParams.width= (int) ((float)headWidth+(float)headWidth*(scale-1)/2);
         headView.setPadding(0,0, (int) ((float)layoutParams.width-(float)headWidth),0);
-        headView.requestLayout();
     }
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (isHasHeadView()&&isReadyScale()&&!isFling){
+        if (isHasHeadView()&&isReadyScale()&&!isFling&&isEnableScale){
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                Log.v("xixi=","ACTION_DOWN");
                 downX = ev.getX();
                 downY = ev.getY();
                 isBeginScale = false;
@@ -132,7 +142,7 @@ public class ScaleHeaderLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-        if (isHasHeadView()&&isReadyScale()&&!isFling){
+        if (isHasHeadView()&&isReadyScale()&&!isFling&&isEnableScale){
             if (mVelocityTracker == null) {
                 mVelocityTracker = VelocityTracker.obtain();
             }
@@ -148,6 +158,7 @@ public class ScaleHeaderLayout extends FrameLayout {
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
                     if (isBeginScale&&mLastY!=-1){
+                        if (isEnableFlingScale){
                         mVelocityTracker.computeCurrentVelocity(1000, mMaxFlingVelocity);
                         int yvel = (int) mVelocityTracker.getYVelocity();
                         //因为速度过大的话，        headView.requestLayout();会有轻微的卡顿，所以限制了最大速度
@@ -159,6 +170,10 @@ public class ScaleHeaderLayout extends FrameLayout {
                         invalidate();
                         if (mVelocityTracker != null) {
                             mVelocityTracker.clear();
+                        }
+                        }else {
+                            scroller.abortAnimation();
+                            recoverScale();
                         }
                         }else {
                             scroller.abortAnimation();
@@ -205,7 +220,9 @@ public class ScaleHeaderLayout extends FrameLayout {
             anim.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) {
-
+                    if (onRefreshListener!=null){
+                        onRefreshListener.onRefreshReady();
+                    }
                 }
 
                 @Override
@@ -241,6 +258,9 @@ public class ScaleHeaderLayout extends FrameLayout {
             if (!scroller.isFinished()){
                 scroller.abortAnimation();
             }
+        }
+        if (onRefreshListener!=null){
+            onRefreshListener.onRefreshPulldown(mTotalDy-mTotalDy*(mLastScale-1)/2,headHeight);
         }
         setHeadViewPosition(mLastScale);
     }

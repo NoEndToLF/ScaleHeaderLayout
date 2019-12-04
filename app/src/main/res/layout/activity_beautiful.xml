@@ -26,10 +26,10 @@
                     app:layout_collapseMode="parallax"
                     app:layout_collapseParallaxMultiplier="0.5">
 <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:id="@+id/linear_head">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:id="@+id/linear_head">
                     <ImageView
                         android:id="@+id/iv_head"
                         android:layout_width="match_parent"
@@ -125,4 +125,11 @@
             android:layout_height="match_parent"
             />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <ImageView
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@mipmap/refresh"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/iv_refresh"
+        ></ImageView>
 </com.wxy.scaleheaderlayoutlibrary.view.ScaleHeaderLayout>
