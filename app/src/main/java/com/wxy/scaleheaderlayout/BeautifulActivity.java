@@ -1,6 +1,7 @@
 package com.wxy.scaleheaderlayout;
 
 import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.os.Bundle;
@@ -93,7 +94,7 @@ public class BeautifulActivity extends AppCompatActivity {
             public void onRefreshReady() {
                 if (ivRefresh.getTranslationY()<maxRefreshHeight){
                     //达不到最大下拉位置，则认为不加载，直接recover
-                    recover(null);
+                    recover();
                 }else {
                     //达到最大下拉位置，则认为加载,执行加载动画
                     isFreshing=true;
@@ -110,7 +111,8 @@ public class BeautifulActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(BeautifulActivity.this, "加载成功", Toast.LENGTH_SHORT).show();
-                        recover(valueAnimator);
+                        valueAnimator.cancel();
+                        recover();
                     }
                 },2000);
             }
@@ -134,20 +136,25 @@ public class BeautifulActivity extends AppCompatActivity {
         });
     }
 
-    private void recover(ValueAnimator refreshAnimator) {
-        ValueAnimator recoverAnimator= ObjectAnimator.ofFloat(ivRefresh, "translationY", ivRefresh.getTranslationY(), -ivRefresh.getHeight());
-        recoverAnimator.setInterpolator(new AccelerateInterpolator());
-        recoverAnimator.setDuration(300);
-        recoverAnimator.addListener(new Animator.AnimatorListener() {
+    private void recover() {
+        float rotation = ivRefresh.getRotation();
+        AnimatorSet animatorSet = new AnimatorSet();
+        if (!isFreshing){
+        animatorSet.play( ObjectAnimator.ofFloat(ivRefresh, "translationY", ivRefresh.getTranslationY(), -ivRefresh.getHeight()))
+        .with(ObjectAnimator.ofFloat(ivRefresh, "rotation", rotation, rotation - 360));
+        }else {
+            animatorSet.play( ObjectAnimator.ofFloat(ivRefresh, "translationY", ivRefresh.getTranslationY(), -ivRefresh.getHeight()))
+                    .with(ObjectAnimator.ofFloat(ivRefresh, "rotation", rotation, rotation + 360));
+        }
+        animatorSet.setInterpolator(new AccelerateInterpolator());
+        animatorSet.setDuration(300);
+        animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
             }
             @Override
             public void onAnimationEnd(Animator animation) {
                 isFreshing=false;
-                if (refreshAnimator!=null){
-                    refreshAnimator.cancel();
-                }
             }
 
             @Override
@@ -160,7 +167,7 @@ public class BeautifulActivity extends AppCompatActivity {
 
             }
         });
-        recoverAnimator.start();
+        animatorSet.start();
 
     }
 
