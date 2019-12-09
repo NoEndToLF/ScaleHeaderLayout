@@ -87,7 +87,6 @@ public class BeautifulActivity extends AppCompatActivity {
                  maxRefreshHeight=headViewHeight/3;
                 //随着下拉距离变换
                 ivRefresh.setTranslationY(Math.min(dy-ivRefresh.getHeight(),maxRefreshHeight));
-                Log.v("xixi", dy-ivRefresh.getHeight()/maxRefreshHeight*360f+"");
                 ivRefresh.setRotation(dy-ivRefresh.getHeight()/maxRefreshHeight*360);
             }
             @Override

@@ -18,6 +18,11 @@ public class NoScrollViewPager extends ViewPager {
         // TODO Auto-generated constructor stub
     }
 
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     public NoScrollViewPager(Context context) {
         super(context);
     }
