@@ -63,7 +63,7 @@ public class BeautifulActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         initViewPager();
         scaleLayout.setHeadView(ivHead);
-        scaleLayout.setRatio(0.2f);
+        scaleLayout.setRatio(0.8f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);
         scaleLayout.setEnableFlingScale(true);

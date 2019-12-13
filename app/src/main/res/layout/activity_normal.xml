@@ -33,6 +33,25 @@
                 android:text="你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊你好啊啊">
 
             </TextView>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ch.ielse.view.SwitchView
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:layout_marginLeft="15dp"
+                    app:isOpened="false"
+                    android:id="@+id/switch_fling"></ch.ielse.view.SwitchView>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="20dp"
+                    android:layout_height="wrap_content"
+                    android:text="是否允许Fling：否"
+                    android:id="@+id/tv_fling"></TextView>
+            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 

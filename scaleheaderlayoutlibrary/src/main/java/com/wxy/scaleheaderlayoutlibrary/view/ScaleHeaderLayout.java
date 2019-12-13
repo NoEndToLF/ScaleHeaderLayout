@@ -3,6 +3,7 @@ package com.wxy.scaleheaderlayoutlibrary.view;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -103,11 +104,19 @@ public class ScaleHeaderLayout extends FrameLayout {
             scroller=new Scroller(getContext());
     }
     private void setHeadViewPosition(float scale){
+
         ViewGroup.LayoutParams layoutParams=headView.getLayoutParams();
-        layoutParams.height= (int) ((float)headHeight+(float)headHeight*(scale-1)/2);
-        layoutParams.width= (int) ((float)headWidth+(float)headWidth*(scale-1)/2);
+            layoutParams.height= (int) ((float)headHeight*scale);
+            layoutParams.width= (int) ((float)headWidth*scale);
         headView.setPadding(0,0, (int) ((float)layoutParams.width-(float)headWidth),0);
+
     }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+    }
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (isHasHeadView()&&isReadyScale()&&!isFling&&isEnableScale){
