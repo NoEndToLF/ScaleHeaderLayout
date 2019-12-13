@@ -13,6 +13,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Scroller;
@@ -30,7 +31,7 @@ public class ScaleHeaderLayout extends FrameLayout {
     private int headHeight,headWidth;//头部的高度和宽度
     private OnReadyScaleListener onReadyScaleListener;//是否可以滑动放大
     private boolean isEnableFlingScale;//是否可以惯性放大
-    private View headView;//可放大的View
+    private ImageView headView;//可放大的View
     private boolean isBeginScale;//开始缩放
     private float downX,downY;
     private float maxScale=2;//最大缩放倍数
@@ -66,7 +67,7 @@ public class ScaleHeaderLayout extends FrameLayout {
 
     }
 
-    public void setHeadView(final View headView) {
+    public void setHeadImageView(final ImageView headView) {
         this.headView = headView;
         if (headView!=null){
             if (!(headView.getParent()  instanceof LinearLayout)){

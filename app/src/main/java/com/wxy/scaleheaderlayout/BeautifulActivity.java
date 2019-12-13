@@ -62,7 +62,7 @@ public class BeautifulActivity extends AppCompatActivity {
         setContentView(R.layout.activity_beautiful);
         ButterKnife.bind(this);
         initViewPager();
-        scaleLayout.setHeadView(ivHead);
+        scaleLayout.setHeadImageView(ivHead);
         scaleLayout.setRatio(0.8f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);

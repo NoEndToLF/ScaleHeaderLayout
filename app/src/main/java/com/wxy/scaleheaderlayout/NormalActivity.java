@@ -30,7 +30,7 @@ public class NormalActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_normal);
         ButterKnife.bind(this);
-        scaleLayout.setHeadView(ivHead);
+        scaleLayout.setHeadImageView(ivHead);
         scaleLayout.setRatio(0.5f);
         scaleLayout.setMaxScale(2f);
         scaleLayout.setRecoverTime(400);
